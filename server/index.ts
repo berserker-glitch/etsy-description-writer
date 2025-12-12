@@ -14,7 +14,6 @@ app.use(express.json({ limit: '1mb' }));
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const PORT = Number(process.env.API_PORT) || 4000;
 const MODEL = 'tngtech/deepseek-r1t2-chimera:free';
-const MAX_TOKENS = Number(process.env.OPENROUTER_MAX_TOKENS) || 900;
 
 if (!OPENROUTER_API_KEY) {
   console.warn(
@@ -103,7 +102,10 @@ const openRouterChat = async (payload: unknown) => {
   };
 
   const content = data.choices?.[0]?.message?.content?.trim();
-  if (!content) throw new Error('OpenRouter returned an empty description');
+  if (!content) {
+    console.error('OpenRouter returned an empty description. Raw response payload:', data);
+    throw new Error('OpenRouter returned an empty description');
+  }
   return content;
 };
 
@@ -112,15 +114,28 @@ const callOpenRouter = async (productName: string, productDetails: string, keywo
     throw new Error('OPENROUTER_API_KEY is not configured');
   }
 
-  const prompt = `You write Etsy product descriptions that are punchy, conversational, and keyword rich.\n` +
-    `The user will provide a product name, optional details, and SEO keywords.\n` +
-    `Return a markdown description that:\n` +
-    `- Starts with a compelling hook in bold\n` +
-    `- Includes 3 short bullet lists (benefits, materials, perfect for)\n` +
-    `- Naturally weaves in the provided keywords without stuffing\n` +
-    `- Ends with a short CTA inviting the reader to add to cart\n` +
-    `Important: Always finish the description and end on a complete sentence.\n` +
-    `Only respond with markdown.`;
+  const prompt =
+    `You are an expert Etsy copywriter + SEO assistant.\n` +
+    `Goal: produce a high-converting Etsy product description in clean Markdown.\n` +
+    `The user provides: product name, product details, and target SEO keywords.\n\n` +
+    `SEO rules (must follow):\n` +
+    `- Use the PRIMARY keyword phrase early (within the first 2 sentences).\n` +
+    `- Include 3–8 keywords/variants naturally across the text (no stuffing, no keyword lists).\n` +
+    `- Prefer buyer-intent language (gift, personalized, handmade, size, material, occasion) when applicable.\n` +
+    `- Add scannable structure with short sections and bullet points.\n\n` +
+    `Style rules:\n` +
+    `- Minimal emojis: 0–2 total, only if they genuinely fit; never put emojis on every bullet.\n` +
+    `- Clear, warm, confident tone. Avoid hype and ALL CAPS.\n` +
+    `- Always finish the description and end with a complete sentence.\n\n` +
+    `Required output structure (Markdown only):\n` +
+    `1) **Hook** (1–2 lines, includes primary keyword)\n` +
+    `2) Short paragraph (2–4 sentences) explaining what it is + who it’s for\n` +
+    `3) ### Key features (bullets)\n` +
+    `4) ### Materials & care (bullets) if mentioned in the product details; if missing don't mention them "\n` +
+    `5) ### Size / personalization (bullets) if mentioned in the product details; if missing don't mention them "\n` +
+    `6) ### Perfect for (bullets)\n` +
+    `7) **CTA** (1 line)\n\n` +
+    `Only respond with Markdown (no commentary).`;
 
   const userMessage = `Product Name: ${productName}\n` +
     `Product Details: ${productDetails}\n` +
@@ -135,7 +150,6 @@ const callOpenRouter = async (productName: string, productDetails: string, keywo
     model: MODEL,
     messages: baseMessages,
     temperature: 0.7,
-    max_tokens: MAX_TOKENS,
   });
 
   // If the model got cut off (common with small token limits), ask it to continue.
@@ -152,7 +166,6 @@ const callOpenRouter = async (productName: string, productDetails: string, keywo
         },
       ],
       temperature: 0.7,
-      max_tokens: Math.max(300, Math.floor(MAX_TOKENS / 2)),
     });
     description = `${description}\n${continuation}`.trim();
   }

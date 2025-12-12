@@ -27,6 +27,16 @@ body {
   overflow: hidden;
 }
 
+html[data-theme='dark'] body {
+  /* Dark background without a bright/white center */
+  background: radial-gradient(
+    circle at top,
+    rgba(34, 197, 94, 0.10) 0%,
+    rgba(11, 18, 32, 1) 32%,
+    rgba(5, 8, 15, 1) 100%
+  );
+}
+
 #root {
   width: 100%;
   height: 100%;
