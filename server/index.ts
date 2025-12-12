@@ -131,8 +131,8 @@ const callOpenRouter = async (productName: string, productDetails: string, keywo
     `1) **Hook** (1–2 lines, includes primary keyword)\n` +
     `2) Short paragraph (2–4 sentences) explaining what it is + who it’s for\n` +
     `3) ### Key features (bullets)\n` +
-    `4) ### Materials & care (bullets) if mentioned in the product details; if missing don't mention them "\n` +
-    `5) ### Size / personalization (bullets) if mentioned in the product details; if missing don't mention them "\n` +
+    `4) ### Materials & care (bullets) if mentioned in the product details; if missing don't mention them\n` +
+    `5) ### Size / personalization (bullets) if mentioned in the product details; if missing don't mention them\n` +
     `6) ### Perfect for (bullets)\n` +
     `7) **CTA** (1 line)\n\n` +
     `Only respond with Markdown (no commentary).`;
